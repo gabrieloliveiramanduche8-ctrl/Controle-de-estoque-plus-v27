@@ -1,0 +1,1 @@
+{"name":"tecnoflow-tecidos-v25-3","version":"26.0.0","private":true,"scripts":{"start":"node server.js"},"dependencies":{"pg":"^8.16.3"}}

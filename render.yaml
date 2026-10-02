@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: controle-de-tecido-v23
+    runtime: node
+    buildCommand: npm install
+    startCommand: node server.js
