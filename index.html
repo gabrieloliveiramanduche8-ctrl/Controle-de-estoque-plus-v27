@@ -73,6 +73,21 @@ nav{position:relative;z-index:20;background:#080b12b8;backdrop-filter:blur(12px)
 @keyframes meteorFly{0%{transform:translate3d(-20vw,-8vh,0) rotate(-25deg);opacity:0}8%{opacity:.9}22%{opacity:0;transform:translate3d(55vw,35vh,0) rotate(-25deg)}100%{opacity:0;transform:translate3d(55vw,35vh,0) rotate(-25deg)}}
 @keyframes warpPulse{0%,100%{transform:scale(.92);opacity:.18}50%{transform:scale(1.05);opacity:.5}}
 .space-control{position:fixed;right:14px;bottom:14px;z-index:40}.space-control button{background:#101827dd;color:#fff;border:1px solid #ffffff22;backdrop-filter:blur(12px);box-shadow:0 10px 28px #0008}.space-panel{position:fixed;right:14px;bottom:62px;width:min(360px,calc(100vw - 28px));max-height:78vh;overflow:auto;z-index:41;background:#070b14ee;color:#fff;border:1px solid #ffffff1f;border-radius:18px;padding:14px;box-shadow:0 18px 60px #000b;backdrop-filter:blur(18px);display:none}.space-panel.show{display:block;animation:pop .22s ease-out}.space-panel h3{margin:0 0 4px;font-size:17px}.space-panel .sub{color:#aeb7c5;font-size:11px;margin-bottom:12px}.scene-grid,.fx-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.scene-btn,.fx-btn{padding:10px;border:1px solid #ffffff18;background:#111827;color:#dfe7f2;border-radius:11px;text-align:left}.scene-btn.active,.fx-btn.active{background:#1769e0;color:#fff;box-shadow:0 0 0 1px #6ea7ff55}.fx-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0;padding:8px 10px;border-radius:10px;background:#0d1421}.fx-row label{margin:0;font-size:11px}.fx-row input{width:auto;transform:scale(1.15)}
+/* TEMA CLARO / FUNDO BRANCO */
+body.white-bg{background:#fff!important;color:#17212b!important}
+body.white-bg .space-bg,body.white-bg .stars-bg,body.white-bg .bh-lens,body.white-bg .bh-particles,body.white-bg .bh-flare,body.white-bg .blackhole-atmosphere,body.white-bg .space-scene{display:none!important}
+body.white-bg header{background:var(--primary);color:#fff;border-bottom:1px solid #0f56bd}
+body.white-bg nav{background:#fff;color:#17212b;border-bottom:1px solid var(--line);backdrop-filter:none;-webkit-backdrop-filter:none}
+body.white-bg .card{background:#fff;color:#17212b;border-color:var(--line);box-shadow:0 2px 10px #0000000a;backdrop-filter:none;-webkit-backdrop-filter:none}
+body.white-bg input,body.white-bg select,body.white-bg textarea{background:#fff;color:#17212b;border-color:var(--line)}
+body.white-bg .result,body.white-bg .statusbox{background:#f7f9fc;color:#17212b;border-color:var(--line)}
+body.white-bg .space-panel{background:#fff;color:#17212b;border-color:#dce3eb;box-shadow:0 18px 50px #0003;backdrop-filter:none;-webkit-backdrop-filter:none}
+body.white-bg .space-panel .sub{color:#667085}
+body.white-bg .scene-btn,body.white-bg .fx-btn{background:#f3f6fa;color:#17212b;border-color:#dce3eb}
+body.white-bg .scene-btn.active,body.white-bg .fx-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+body.white-bg .fx-row{background:#f3f6fa}
+body.white-bg .space-control button{background:#fff;color:#17212b;border-color:#dce3eb;box-shadow:0 8px 22px #0002}
+
 @media(max-width:600px){.space-panel{right:8px;bottom:58px;width:calc(100vw - 16px)}.space-control{right:8px;bottom:8px}.sun{width:95px;height:95px;right:4%;top:14%}.planet.p1{width:62px;height:62px}.planet.p3{width:44px;height:44px}.moon{width:74px;height:74px;left:5%;bottom:16%}.galaxy{width:125vw;height:125vw;right:-34%;top:-15%}}
 @media(prefers-reduced-motion:reduce){.space-scene *{animation:none!important}.space-scene{transition:none}}
 
@@ -110,6 +125,7 @@ nav{position:relative;z-index:20;background:#080b12b8;backdrop-filter:blur(12px)
     <button class="fx-btn active" data-fx="motion">🌀 MOVIMENTO</button><button class="fx-btn active" data-fx="dim">🌑 CONTRASTE</button>
   </div>
   <div class="fx-row"><label for="spaceIntensity">INTENSIDADE</label><input id="spaceIntensity" type="range" min="40" max="140" value="100"></div>
+  <button id="whiteBgToggle" class="fx-btn" style="width:100%;margin-top:8px;text-align:center">☀️ FUNDO BRANCO</button>
 </div>
 <header><div class="topbar"><div class="topbar-main"><button id="menuBtn" class="menu-btn" aria-label="ABRIR MENU">☰</button><h1 class="brand-title">ESTOQUE DE TECIDO PLUS+</h1></div></div></header>
 <div class="header-tools" aria-hidden="true"><span id="health" class="status">VERIFICANDO...</span><span id="autosaveStatus" class="autosave-pill">✓ SALVO</span><button class="secondary" id="exportBackup">💾 BACKUP</button><button class="secondary" id="importBackupBtn">📥 IMPORTAR</button><input id="importBackup" type="file" accept="application/json" class="hidden"></div>
@@ -205,9 +221,9 @@ function renderRoms(){const rows=romaneios.slice(0,100).map(r=>{const p=r.payloa
 const SPACE_KEY='estoque_plus_space_v1';
 const spaceScene=$('spaceScene');
 function applySpaceSettings(){
-  let cfg={scene:'blackhole',fx:{stars:true,particles:true,lens:true,flare:true,atmosphere:true,meteors:false,motion:true,dim:true},intensity:100};
-  try{cfg={...cfg,...JSON.parse(localStorage.getItem(SPACE_KEY)||'{}'),fx:{...cfg.fx,...(JSON.parse(localStorage.getItem(SPACE_KEY)||'{}').fx||{})}}}catch{}
-  document.body.dataset.scene=cfg.scene; spaceScene.className=`space-scene scene-${cfg.scene}`;
+  let cfg={scene:'blackhole',fx:{stars:true,particles:true,lens:true,flare:true,atmosphere:true,meteors:false,motion:true,dim:true},intensity:100,whiteBg:false};
+  try{const saved=JSON.parse(localStorage.getItem(SPACE_KEY)||'{}');cfg={...cfg,...saved,fx:{...cfg.fx,...(saved.fx||{})}}}catch{}
+  document.body.dataset.scene=cfg.scene; document.body.classList.toggle('white-bg',cfg.whiteBg===true); spaceScene.className=`space-scene scene-${cfg.scene}`;
   const map={stars:'stars-bg',particles:'bh-particles',lens:'bh-lens',flare:'bh-flare',atmosphere:'blackhole-atmosphere'};
   Object.entries(map).forEach(([k,id])=>$(id)?.classList.toggle('effect-off',cfg.fx[k]===false));
   $('.meteor')?.classList.toggle('effect-off',cfg.fx.meteors===false);
@@ -219,9 +235,10 @@ function applySpaceSettings(){
   document.querySelectorAll('.scene-btn').forEach(b=>b.classList.toggle('active',b.dataset.scene===cfg.scene));
   document.querySelectorAll('.fx-btn').forEach(b=>b.classList.toggle('active',cfg.fx[b.dataset.fx]!==false));
   $('spaceIntensity').value=cfg.intensity;
+  const wb=$('whiteBgToggle'); if(wb){wb.textContent=cfg.whiteBg===true?'🌌 VOLTAR AO FUNDO ESPACIAL':'☀️ FUNDO BRANCO';wb.classList.toggle('active',cfg.whiteBg===true)}
 }
 function saveSpaceSettings(){
-  const cfg={scene:document.body.dataset.scene||'blackhole',fx:{}};
+  const cfg={scene:document.body.dataset.scene||'blackhole',fx:{},whiteBg:document.body.classList.contains('white-bg')};
   document.querySelectorAll('.fx-btn').forEach(b=>cfg.fx[b.dataset.fx]=b.classList.contains('active'));
   cfg.intensity=Number($('spaceIntensity').value||100);localStorage.setItem(SPACE_KEY,JSON.stringify(cfg));applySpaceSettings();
 }
@@ -240,7 +257,9 @@ function setupSpaceUI(){
   $('spaceToggle').onclick=e=>{e.stopPropagation();$('spacePanel').classList.toggle('show')};document.addEventListener('click',e=>{if($('spacePanel').classList.contains('show')&&!$('spacePanel').contains(e.target)&&e.target!==$('spaceToggle'))$('spacePanel').classList.remove('show')});
   document.querySelectorAll('.scene-btn').forEach(b=>b.onclick=()=>{document.body.dataset.scene=b.dataset.scene;saveSpaceSettings()});
   document.querySelectorAll('.fx-btn').forEach(b=>b.onclick=()=>{b.classList.toggle('active');saveSpaceSettings()});
-  $('spaceIntensity').oninput=saveSpaceSettings; applySpaceSettings();
+  $('spaceIntensity').oninput=saveSpaceSettings;
+  $('whiteBgToggle').onclick=e=>{e.stopPropagation();document.body.classList.toggle('white-bg');saveSpaceSettings()};
+  applySpaceSettings();
 }
 async function load(){localLoad();try{const h=await api('/api/health');dbOnline=Boolean(h.database);$('health').textContent=dbOnline?'BANCO ONLINE':'SERVIDOR ONLINE';$('health').className='status ok';if(dbOnline){const s=await api('/api/tecidos');if(Array.isArray(s.fabrics))fabrics=s.fabrics;const hist=await api('/api/movimentos');if(Array.isArray(hist.history))history=hist.history;const rs=await api('/api/romaneios');if(Array.isArray(rs.romaneios))romaneios=rs.romaneios;localSave()}}catch(e){dbOnline=false;$('health').textContent='MODO LOCAL';$('health').className='status'}render();renderEntryRolls()}
 setupMenu();setupMiniRisk();$('addRoll').onclick=addEntryRoll;$('saveEntry').onclick=saveEntry;$('clearEntry').onclick=clearEntry;$('stockSearch').oninput=renderStock;$('outRoll').onchange=updateAvailable;$('saveOut').onclick=saveOut;$('doCalc').onclick=calc;$('doMaterialsCalc').onclick=calcMaterials;['mOc','mGrade','mPairs','g38','g40','g42','g44','g46','g48','zipPer','zipPack','cosPer','refPer','elaPer','sizeLabel','compLabel'].forEach(id=>$(id).addEventListener('input',calcMaterials));$('resetMaterialsCalc').onclick=resetMaterialsCalc;$('exportBackup').onclick=exportBackup;$('importBackupBtn').onclick=()=>$('importBackup').click();$('importBackup').onchange=e=>{if(e.target.files[0])importBackupFile(e.target.files[0]);e.target.value=''};$('cMeters').addEventListener('input',calc);$('cRisk').addEventListener('input',calc);$('cRisks').addEventListener('input',calc);$('romText').oninput=()=>{scheduleDraft();scheduleAutoSave()};$('aiRom').onclick=aiRom;$('saveRom').onclick=saveRom;$('restoreRom').onclick=restoreRom;$('clearRom').onclick=clearRom;['eFabric','eNF','eDate','eRef','rNuance','rLot','rMeters','rCode','outMeters','outOC','outPieces','outNote','cMeters','cRisk','cRisks','mOc','mGrade','mPairs','g38','g40','g42','g44','g46','g48','zipPer','zipPack','cosPer','refPer','elaPer','sizeLabel','compLabel','fRom','fNF','fPedido','fData','fTecido','fArtigo','fNuance','fRef','fPecas','fMetros','fPLiq','fPBruto','fObs'].forEach(id=>{const el=$(id);if(el){el.addEventListener('input',scheduleAutoSave);el.addEventListener('change',scheduleAutoSave)}});window.addEventListener('beforeunload',saveFormDrafts);setupSpaceUI();load();setTimeout(restoreFormDrafts,250);
