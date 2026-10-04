@@ -1,25 +1,30 @@
-# ESTOQUE DE TECIDO PLUS+ V27
+# ESTOQUE DE TECIDO PLUS+ — V31 PRODUÇÃO
 
-Sistema de controle de tecidos, rolos, nuances, cortes, romaneios e leitura de mini risco.
+Sistema web para controle de estoque de tecido, cortes, romaneios, aviamentos, histórico e assistência por IA.
 
-## Correções desta versão
-- Modo local realmente salva entradas, saídas e romaneios no navegador.
-- Calculadora de risco com leitura de formatos de metragem brasileiros.
-- Fundo espacial sem depender de internet.
-- Ajustes de camadas para manter menus e cartões legíveis.
-- Compatível com execução local e Render.
+## Produção no Render
+- Tipo: Web Service
+- Runtime: Node
+- Build: `npm install`
+- Start: `node server.js`
+- Variável obrigatória para banco: `DATABASE_URL` (PostgreSQL)
+- Variável opcional para IA: `OPENAI_API_KEY`
+- Modelo opcional: `OPENAI_MODEL` (padrão configurado no servidor)
 
-## Ambientes espaciais
-Abra **🌌 AMBIENTE** para escolher:
-- Buraco negro
-- Galáxia
-- Sistema solar
-- Lua / planetas
-- Nebulosa
-- Warp espacial
-- Espaço profundo
+## Melhorias V31
+- Health check real do PostgreSQL com latência.
+- Transações para saída de tecido, evitando baixa parcial/inconsistente.
+- Bloqueio de linha (`FOR UPDATE`) para evitar duas saídas simultâneas do mesmo estoque.
+- Movimentação de aviamentos atômica no banco.
+- Proteção contra estoque negativo mesmo com múltiplos dispositivos.
+- Controle de versão para alterações manuais de aviamentos.
+- Índices para histórico e atualização de estoque.
+- Validação de OC e quantidade de peças na saída.
+- Backup local continua disponível pelo menu.
+- Operação local continua disponível quando o banco estiver indisponível.
 
-Também é possível ativar/desativar estrelas, partículas, lente gravitacional, brilho, atmosfera, meteoros, movimento e contraste, além de ajustar a intensidade.
+## Banco
+O servidor cria as tabelas automaticamente no primeiro acesso ao PostgreSQL configurado. Para produção, mantenha o PostgreSQL com backup automático/point-in-time recovery no provedor.
 
-## Render
-Defina `DATABASE_URL` para usar PostgreSQL e, opcionalmente, `OPENAI_API_KEY` para a leitura de romaneios com IA.
+## Teste rápido
+Abra `/api/health`. Em produção, o retorno deve indicar `database: true` quando o PostgreSQL estiver conectado.
