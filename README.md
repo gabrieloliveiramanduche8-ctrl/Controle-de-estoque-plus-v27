@@ -1,44 +1,32 @@
-# ESTOQUE DE TECIDO PLUS+ — V32 MINI RISCO + LOGIN
+# ESTOQUE DE TECIDO PLUS+ V33
 
-Sistema web para controle de estoque de tecido, cortes, romaneios, aviamentos, histórico e assistência por IA.
+Versão corrigida para publicação no Render.
 
-## Produção no Render
-- Tipo: Web Service
-- Runtime: Node
-- Build: `npm install`
-- Start: `node server.js`
-- Variável obrigatória para banco: `DATABASE_URL` (PostgreSQL)
-- Variável opcional para IA: `OPENAI_API_KEY`
-- Modelo opcional: `OPENAI_MODEL` (padrão configurado no servidor)
+## Segurança de login
 
-## Melhorias V31
-- Health check real do PostgreSQL com latência.
-- Transações para saída de tecido, evitando baixa parcial/inconsistente.
-- Bloqueio de linha (`FOR UPDATE`) para evitar duas saídas simultâneas do mesmo estoque.
-- Movimentação de aviamentos atômica no banco.
-- Proteção contra estoque negativo mesmo com múltiplos dispositivos.
-- Controle de versão para alterações manuais de aviamentos.
-- Índices para histórico e atualização de estoque.
-- Validação de OC e quantidade de peças na saída.
-- Backup local continua disponível pelo menu.
-- Operação local continua disponível quando o banco estiver indisponível.
+Configure no Render, em **Environment**:
 
-## Banco
-O servidor cria as tabelas automaticamente no primeiro acesso ao PostgreSQL configurado. Para produção, mantenha o PostgreSQL com backup automático/point-in-time recovery no provedor.
+- `ADMIN_USER` — usuário administrativo
+- `ADMIN_PASSWORD` — senha administrativa
+- `DATABASE_URL` — conexão do PostgreSQL, se estiver usando banco
+- `OPENAI_API_KEY` — opcional, para os recursos de IA
+- `OPENAI_MODEL` — opcional
 
-## Teste rápido
-Abra `/api/health`. Em produção, o retorno deve indicar `database: true` quando o PostgreSQL estiver conectado.
+**Nunca coloque valores secretos no GitHub, no `render.yaml` ou no HTML.**
 
-## LOGIN ADMINISTRATIVO — V31
+O login agora possui:
+- sessão HttpOnly;
+- cookie `Secure` quando executado em HTTPS/Render;
+- expiração por inatividade;
+- limite de tentativas de login;
+- endpoint de diagnóstico que não revela a senha;
+- bloqueio das APIs protegidas sem sessão.
 
-A V32+ usa autenticação de servidor por sessão. Configure no Render:
+## Deploy no Render
 
-- `ADMIN_USER` = usuário do administrador (ex.: `redway`)
-- `ADMIN_PASSWORD` = senha escolhida pelo responsável
+Use `npm install` como build e `node server.js` como start. Depois de alterar variáveis de ambiente, escolha **Save, rebuild, and deploy** ou **Save and deploy**. O Render informa que `Save only` salva a variável mas não a aplica até um novo deploy.
 
-Não coloque a senha no código, no GitHub ou no arquivo `.env` enviado ao repositório. Configure essas variáveis em **Render → Web Service → Environment**.
+## Diagnóstico
 
-A sessão usa cookie `HttpOnly`, expira após 8 horas de inatividade e as rotas `/api/*` ficam bloqueadas sem autenticação. `/api/health` permanece público para health check.
-
-## ANALISADOR DE MINI RISCO — V32
-A V32 identifica OC, grade, pares e tenta contar partes do corte: frente, traseira, perna, bolso, pala, revel, passante, vista larga, vista estreita e bolso relógio. As regras esperadas por par são configuráveis no navegador e comparadas com a contagem lida na foto. Partes não legíveis ficam como não identificadas; regras não configuradas não geram falso erro.
+- `/api/health` mostra apenas o estado geral e se o login está configurado.
+- `/api/auth/status` mostra se o login está configurado, sem expor a senha.

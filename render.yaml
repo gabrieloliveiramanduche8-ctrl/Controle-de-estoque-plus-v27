@@ -1,6 +1,7 @@
 services:
   - type: web
-    name: estoque-de-tecido-plus-v31
+    name: estoque-de-tecido-plus
     runtime: node
     buildCommand: npm install
     startCommand: node server.js
+    healthCheckPath: /api/health
