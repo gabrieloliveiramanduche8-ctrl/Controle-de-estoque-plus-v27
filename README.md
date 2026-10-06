@@ -1,32 +1,41 @@
-# ESTOQUE DE TECIDO PLUS+ V33
+# ESTOQUE DE TECIDO PLUS+ — V35
 
-Versão corrigida para publicação no Render.
+## V35 MULTIEMPRESA + OWNER + OFICINAS + HISTÓRICO
 
-## Segurança de login
+Esta versão transforma o sistema em uma base multiempresa.
 
-Configure no Render, em **Environment**:
+### Hierarquia
+- OWNER: dono da plataforma (conta inicial `admin` / `admin123`, trocar imediatamente).
+- ADMIN: administrador de uma empresa.
+- OPERADOR: usuário operacional da empresa.
 
-- `ADMIN_USER` — usuário administrativo
-- `ADMIN_PASSWORD` — senha administrativa
-- `DATABASE_URL` — conexão do PostgreSQL, se estiver usando banco
-- `OPENAI_API_KEY` — opcional, para os recursos de IA
-- `OPENAI_MODEL` — opcional
+### Multiempresa
+- Empresas são isoladas por `company_id`.
+- Usuários comuns só acessam os dados da própria empresa.
+- O OWNER pode criar empresas e selecionar a empresa ativa.
+- Dados existentes da V34 são migrados para a empresa principal criada automaticamente.
 
-**Nunca coloque valores secretos no GitHub, no `render.yaml` ou no HTML.**
+### Oficinas e aviamentos
+- Cadastro de oficinas por empresa.
+- Registro de envios de aviamentos para cada oficina.
+- Cada envio guarda empresa, oficina, OC, usuário, data, observação e todos os itens enviados.
+- O estoque é baixado dentro da mesma transação do registro do envio; se faltar estoque, o envio inteiro é cancelado.
+- Histórico de até 500 envios recentes por empresa.
 
-O login agora possui:
-- sessão HttpOnly;
-- cookie `Secure` quando executado em HTTPS/Render;
-- expiração por inatividade;
-- limite de tentativas de login;
-- endpoint de diagnóstico que não revela a senha;
-- bloqueio das APIs protegidas sem sessão.
+### Banco
+Use PostgreSQL com `DATABASE_URL` no Render. O sistema cria/migra as tabelas automaticamente na inicialização.
 
-## Deploy no Render
+### Segurança
+- Senhas com scrypt.
+- Sessão HTTP-only.
+- Limite de tentativas de login.
+- Isolamento por empresa no backend.
+- O OWNER não fica preso a uma empresa; ele trabalha com uma empresa ativa por vez.
 
-Use `npm install` como build e `node server.js` como start. Depois de alterar variáveis de ambiente, escolha **Save, rebuild, and deploy** ou **Save and deploy**. O Render informa que `Save only` salva a variável mas não a aplica até um novo deploy.
+### Render
+- Web Service Node.
+- Build: `npm install`
+- Start: `node server.js`
+- Health: `/api/health`
 
-## Diagnóstico
-
-- `/api/health` mostra apenas o estado geral e se o login está configurado.
-- `/api/auth/status` mostra se o login está configurado, sem expor a senha.
+Antes de uma migração importante, faça um backup do Postgres. Render oferece exports lógicos e, em instâncias pagas, recuperação point-in-time. Consulte a documentação oficial: https://render.com/docs/postgresql-backups
