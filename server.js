@@ -2,7 +2,7 @@ const http=require('http');const fs=require('fs');const path=require('path');con
 let Pool=null;
 try{Pool=require('pg').Pool}catch{Pool=null}
 const PORT=Number(process.env.PORT)||3000;const HOST='0.0.0.0';const ROOT=__dirname;const OPENAI_API_KEY=process.env.OPENAI_API_KEY||'';const OPENAI_MODEL=process.env.OPENAI_MODEL||'gpt-5.6-sol';
-const APP_VERSION='V35 MULTIEMPRESA + OWNER + OFICINAS + HISTÓRICO';
+const APP_VERSION='V35.1 MULTIEMPRESA + OWNER + OFICINAS + HISTÓRICO + SEM LOGIN';
 const INITIAL_ADMIN_USER='admin';
 const INITIAL_ADMIN_PASSWORD='admin123';
 const SESSION_TTL_MS=8*60*60*1000;
@@ -75,6 +75,19 @@ async function aiMiniRisk(imageData){if(!OPENAI_API_KEY)throw Error('OPENAI_API_
 function allowAI(req){const now=Date.now();const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').split(',')[0].trim();const hit=aiRate.get(ip)||{at:now,count:0};if(now-hit.at>=AI_RATE_WINDOW_MS){hit.at=now;hit.count=0}hit.count++;aiRate.set(ip,hit);if(aiRate.size>5000){for(const [k,v] of aiRate)if(now-v.at>AI_RATE_WINDOW_MS)aiRate.delete(k)}return hit.count<=AI_RATE_LIMIT}
 async function routes(req,res){const p=decodeURIComponent((req.url||'/').split('?')[0]);cleanSessions();if(req.method==='GET'&&p==='/api/health'){let dbOk=false,dbLatency=null;if(pool){const t=Date.now();try{await db('SELECT 1');dbOk=true;dbLatency=Date.now()-t}catch{}}return send(res,200,{ok:true,service:`ESTOQUE DE TECIDO PLUS+ ${APP_VERSION}`,version:APP_VERSION,database:dbOk,loginConfigured:Boolean(pool),aiConfigured:Boolean(OPENAI_API_KEY),model:OPENAI_MODEL,dbLatencyMs:dbLatency,serverTime:new Date().toISOString(),multiTenant:true,ownerModel:true,officeHistory:true})}
 if(req.method==='GET'&&p==='/api/auth/status'){return send(res,200,{ok:true,configured:Boolean(pool),userConfigured:Boolean(pool)})}
+if(req.method==='POST'&&p==='/api/auth/guest'){
+ if(!pool)return send(res,503,{ok:false,error:'BANCO_NAO_CONFIGURADO'});
+ const q=await db("SELECT id,username,role,active,company_id FROM app_users WHERE active=TRUE ORDER BY CASE WHEN role='OWNER' THEN 0 ELSE 1 END,id LIMIT 1");
+ const row=q.rows[0];
+ if(!row)return send(res,503,{ok:false,error:'USUARIO_OWNER_NAO_CONFIGURADO'});
+ let activeCompanyId=row.company_id?Number(row.company_id):null;
+ if(String(row.role).toUpperCase()==='OWNER'&&!activeCompanyId){const cq=await db("SELECT id FROM companies WHERE status='ATIVA' ORDER BY id LIMIT 1");activeCompanyId=cq.rows[0]?.id||null}
+ const token=crypto.randomBytes(32).toString('hex');
+ sessions.set(token,{user:{id:Number(row.id),username:row.username,role:row.role,companyId:row.company_id?Number(row.company_id):null},activeCompanyId,expires:Date.now()+SESSION_TTL_MS});
+ const secure=String(process.env.RENDER||'').toLowerCase()==='true'||String(req.headers['x-forwarded-proto']||'').split(',')[0].trim()==='https';
+ res.setHeader('Set-Cookie',`estoque_session=${encodeURIComponent(token)}; HttpOnly; Path=/; SameSite=Lax; ${secure?'Secure; ':''}Max-Age=${Math.floor(SESSION_TTL_MS/1000)}`);
+ return send(res,200,{ok:true,user:{username:row.username,role:row.role,companyId:row.company_id?Number(row.company_id):null,activeCompanyId}});
+}
 if(req.method==='POST'&&p==='/api/auth/login'){const b=await body(req);if(!pool)return send(res,503,{ok:false,error:'BANCO_DE_USUARIOS_NAO_CONFIGURADO'});if(!loginAllowed(req))return send(res,429,{ok:false,error:'MUITAS_TENTATIVAS_LOGIN','retryAfterSeconds':Math.max(1,Math.ceil((LOGIN_WINDOW_MS-(Date.now()-(loginAttempts.get(clientKey(req))?.started||Date.now())))/1000))});const username=cleanUsername(b.user);const q=await db('SELECT id,username,password_hash,role,active,company_id FROM app_users WHERE username=$1',[username]);const row=q.rows[0];const passOk=Boolean(row&&row.active&&verifyPassword(b.password,row.password_hash));if(!row||!passOk){recordLoginFailure(req);return send(res,401,{ok:false,error:'USUARIO_OU_SENHA_INVALIDOS'})}clearLoginFailures(req);const token=crypto.randomBytes(32).toString('hex');let activeCompanyId=row.company_id?Number(row.company_id):null;if(String(row.role).toUpperCase()==='OWNER'&&!activeCompanyId){const cq=await db("SELECT id FROM companies WHERE status='ATIVA' ORDER BY id LIMIT 1");activeCompanyId=cq.rows[0]?.id||null}sessions.set(token,{user:{id:Number(row.id),username:row.username,role:row.role,companyId:row.company_id?Number(row.company_id):null},activeCompanyId,expires:Date.now()+SESSION_TTL_MS});const secure=String(process.env.RENDER||'').toLowerCase()==='true'||String(req.headers['x-forwarded-proto']||'').split(',')[0].trim()==='https';res.setHeader('Set-Cookie',`estoque_session=${encodeURIComponent(token)}; HttpOnly; Path=/; SameSite=Lax; ${secure?'Secure; ':''}Max-Age=${Math.floor(SESSION_TTL_MS/1000)}`);return send(res,200,{ok:true,user:{username:row.username,role:row.role,companyId:row.company_id?Number(row.company_id):null,activeCompanyId},expiresAt:new Date(Date.now()+SESSION_TTL_MS).toISOString()})}
 if(req.method==='POST'&&p==='/api/auth/logout'){const token=parseCookies(req).estoque_session;if(token)sessions.delete(token);res.setHeader('Set-Cookie','estoque_session=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0');return send(res,200,{ok:true})}
 if(req.method==='GET'&&p==='/api/auth/me'){const user=await currentDbUser(req);const sess=await currentSession(req);return send(res,200,{authenticated:Boolean(user&&user.active!==false),user:user?{id:Number(user.id),username:user.username,role:user.role,companyId:user.company_id?Number(user.company_id):null,activeCompanyId:sess?.activeCompanyId||null}:null})}

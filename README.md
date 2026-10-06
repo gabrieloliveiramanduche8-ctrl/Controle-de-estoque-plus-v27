@@ -1,4 +1,4 @@
-# ESTOQUE DE TECIDO PLUS+ — V35
+# ESTOQUE DE TECIDO PLUS+ — V35.1
 
 ## V35 MULTIEMPRESA + OWNER + OFICINAS + HISTÓRICO
 
@@ -39,3 +39,7 @@ Use PostgreSQL com `DATABASE_URL` no Render. O sistema cria/migra as tabelas aut
 - Health: `/api/health`
 
 Antes de uma migração importante, faça um backup do Postgres. Render oferece exports lógicos e, em instâncias pagas, recuperação point-in-time. Consulte a documentação oficial: https://render.com/docs/postgresql-backups
+
+
+### V35.1 — SEM LOGIN TEMPORARIAMENTE
+O acesso por senha foi desativado temporariamente. Em ambiente Render com PostgreSQL, o servidor cria uma sessão administrativa temporária automaticamente para permitir o uso do sistema. **Esta versão não deve ser usada como versão pública definitiva**, pois qualquer pessoa com acesso ao site poderá entrar enquanto o login estiver desativado.
